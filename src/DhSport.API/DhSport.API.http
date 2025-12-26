@@ -1,0 +1,6 @@
+@DhSport.API_HostAddress = http://localhost:5182
+
+GET {{DhSport.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
