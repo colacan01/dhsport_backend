@@ -1,7 +1,7 @@
 using DhSport.API.Extensions;
 using DhSport.Application;
 using DhSport.Infrastructure;
-using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +27,34 @@ builder.Services.AddSwaggerGen(c =>
         Title = "DhSport API",
         Version = "v1",
         Description = "동협스포츠 Backend API"
+    });
+
+    // JWT Bearer 인증 설정
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n" +
+                      "Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\n" +
+                      "Example: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
     });
 });
 
@@ -64,6 +92,10 @@ if (app.Environment.IsDevelopment())
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "DhSport API v1");
         c.RoutePrefix = "swagger";
+        c.DocumentTitle = "DhSport API Documentation";
+        c.EnableDeepLinking();
+        c.DisplayRequestDuration();
+        c.EnableFilter();
     });
 }
 
