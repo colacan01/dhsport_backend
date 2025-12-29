@@ -88,9 +88,16 @@ public class AuthController : ControllerBase
 
     private Guid GetUserIdFromToken()
     {
+        // Try standard "sub" claim first
         var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+        // Fallback to ClaimTypes.NameIdentifier (mapped claim)
+        if (string.IsNullOrEmpty(userIdClaim))
+            userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
         if (string.IsNullOrEmpty(userIdClaim))
             throw new UnauthorizedAccessException("Invalid token");
+
         return Guid.Parse(userIdClaim);
     }
 }

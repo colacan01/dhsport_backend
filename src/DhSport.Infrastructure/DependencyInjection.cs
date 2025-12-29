@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using DhSport.Application.Interfaces;
 using DhSport.Domain.Interfaces.Repositories;
@@ -18,6 +19,9 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        // Disable default claim type mapping
+        JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
         // Database
         services.AddDbContext<ApplicationDbContext>(options =>
         {
