@@ -85,7 +85,11 @@ var app = builder.Build();
 // }
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+// Swagger 활성화 조건: Development 환경 OR EnableSwagger=true
+var enableSwagger = app.Environment.IsDevelopment() ||
+                    builder.Configuration.GetValue<bool>("EnableSwagger", false);
+
+if (enableSwagger)
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
@@ -97,6 +101,12 @@ if (app.Environment.IsDevelopment())
         c.DisplayRequestDuration();
         c.EnableFilter();
     });
+
+    // 프로덕션에서 Swagger 활성화 시 경고 로그
+    if (!app.Environment.IsDevelopment())
+    {
+        Log.Warning("Swagger UI is enabled in Production environment. Ensure proper access control is in place.");
+    }
 }
 
 app.UseHttpsRedirection();

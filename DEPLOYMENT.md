@@ -280,7 +280,9 @@ cp -r publish/* /opt/dhsport/app/
 cd /opt/dhsport/app
 
 # 마이그레이션 적용
-dotnet ef database update --project src/DhSport.Infrastructure/DhSport.Infrastructure.csproj
+dotnet ef database update \
+    --project src/DhSport.Infrastructure/DhSport.Infrastructure.csproj \
+    --startup-project src/DhSport.API/DhSport.API.csproj
 
 # 또는 자동 마이그레이션 (애플리케이션 시작 시 자동 실행됨)
 ```
@@ -582,7 +584,53 @@ crontab -e
 
 ## 8. 운영 및 모니터링
 
-### 8.1 서비스 관리
+### 8.1 Swagger UI 제어
+
+기본적으로 프로덕션 환경에서는 Swagger가 비활성화됩니다.
+
+#### 프로덕션에서 Swagger 활성화 방법
+
+**1. appsettings.Production.json 설정**:
+```json
+{
+  "EnableSwagger": true
+}
+```
+
+**2. 환경 변수 설정**:
+```bash
+# systemd 서비스 파일 편집
+sudo nano /etc/systemd/system/dhsport.service
+
+# 다음 라인 주석 해제
+Environment=EnableSwagger=true
+
+# 서비스 재시작
+sudo systemctl daemon-reload
+sudo systemctl restart dhsport
+```
+
+**3. 직접 실행 시**:
+```bash
+export EnableSwagger=true
+dotnet /opt/dhsport/app/DhSport.API.dll
+```
+
+#### 보안 고려사항
+
+⚠️ **프로덕션에서 Swagger 활성화 시 주의사항**:
+- API 구조가 외부에 노출될 수 있음
+- 반드시 접근 제어 필요 (IP 화이트리스트, VPN, 인증 등)
+- 경고 로그가 기록되므로 정기적으로 확인
+- 임시 사용 후 반드시 비활성화 권장
+
+#### 설정 우선순위
+1. **환경 변수** `EnableSwagger=true` (최우선)
+2. **appsettings.Production.json** 파일의 `EnableSwagger` 값
+3. **appsettings.json** 파일의 `EnableSwagger` 값
+4. **Development 환경**은 무조건 활성화
+
+### 8.2 서비스 관리
 
 ```bash
 # 상태 확인
@@ -607,7 +655,7 @@ journalctl -u dhsport -n 100
 journalctl -u dhsport --since "1 hour ago"
 ```
 
-### 8.2 로그 확인
+### 8.3 로그 확인
 
 #### 애플리케이션 로그 (Serilog)
 ```bash
@@ -639,7 +687,7 @@ journalctl -u dhsport --since today
 journalctl -u dhsport -p err
 ```
 
-### 8.3 성능 모니터링
+### 8.4 성능 모니터링
 
 #### CPU 및 메모리 사용량
 ```bash
@@ -674,7 +722,7 @@ du -sh /opt/dhsport/*
 du -sh /opt/dhsport/logs/
 ```
 
-### 8.4 데이터베이스 관리
+### 8.5 데이터베이스 관리
 
 #### 마이그레이션 확인
 ```bash
@@ -692,7 +740,7 @@ dotnet ef database update --project src/DhSport.Infrastructure/DhSport.Infrastru
 psql -h 172.30.1.51 -U dhsport -d dhsports_prd -c "\dt"
 ```
 
-### 8.5 Redis 모니터링
+### 8.6 Redis 모니터링
 
 ```bash
 # Redis 연결 테스트
@@ -705,7 +753,7 @@ redis-cli -h 172.30.1.51 info
 redis-cli -h 172.30.1.51 info memory
 ```
 
-### 8.6 로그 로테이션
+### 8.7 로그 로테이션
 
 Serilog는 자동으로 일일 로그 파일을 생성하지만, Nginx 로그는 logrotate로 관리합니다.
 
@@ -850,16 +898,44 @@ grep client_max_body_size /etc/nginx/sites-available/dhsport
 ```bash
 # 마이그레이션 상태 확인
 cd /opt/dhsport/app
-dotnet ef migrations list --project src/DhSport.Infrastructure/DhSport.Infrastructure.csproj
+dotnet ef migrations list \
+    --project src/DhSport.Infrastructure/DhSport.Infrastructure.csproj \
+    --startup-project src/DhSport.API/DhSport.API.csproj
 
 # 데이터베이스 연결 확인
 psql -h 172.30.1.51 -U dhsport -d dhsports_prd -c "SELECT version();"
 ```
 
+**일반적인 오류**:
+
+1. **"Your startup project 'DhSport.Infrastructure' doesn't reference Microsoft.EntityFrameworkCore.Design"**
+   - **원인**: `--startup-project` 매개변수 누락
+   - **해결**: 마이그레이션 명령에 `--startup-project src/DhSport.API/DhSport.API.csproj` 추가
+
+2. **연결 문자열 오류**
+   - **원인**: appsettings.Production.json의 데이터베이스 비밀번호 오류
+   - **해결**: 연결 문자열 및 DB 비밀번호 확인
+
+3. **권한 오류**
+   - **원인**: PostgreSQL 사용자 권한 부족
+   - **해결**: dhsport 사용자에게 CREATE, ALTER 권한 부여
+
 **해결책**:
-1. 데이터베이스 권한 확인
-2. 충돌하는 마이그레이션 제거
-3. 수동 마이그레이션: SQL 스크립트 직접 실행
+```bash
+# 올바른 마이그레이션 명령
+cd /opt/dhsport/app
+dotnet ef database update \
+    --project src/DhSport.Infrastructure/DhSport.Infrastructure.csproj \
+    --startup-project src/DhSport.API/DhSport.API.csproj
+
+# 또는 마이그레이션 강제 재적용
+dotnet ef database update 0 \
+    --project src/DhSport.Infrastructure/DhSport.Infrastructure.csproj \
+    --startup-project src/DhSport.API/DhSport.API.csproj
+dotnet ef database update \
+    --project src/DhSport.Infrastructure/DhSport.Infrastructure.csproj \
+    --startup-project src/DhSport.API/DhSport.API.csproj
+```
 
 ### 9.8 높은 메모리 사용량
 

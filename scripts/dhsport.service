@@ -25,6 +25,9 @@ Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
 Environment=ASPNETCORE_URLS=http://localhost:5000
 
+# Swagger 활성화 (필요시 주석 해제)
+# Environment=EnableSwagger=true
+
 # 리소스 제한 (선택사항)
 #LimitNOFILE=65536
 #MemoryLimit=2G

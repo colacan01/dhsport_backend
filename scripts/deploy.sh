@@ -147,6 +147,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     log_info "데이터베이스 마이그레이션 실행 중..."
     dotnet ef database update \
         --project src/DhSport.Infrastructure/DhSport.Infrastructure.csproj \
+        --startup-project src/DhSport.API/DhSport.API.csproj \
         || log_warn "마이그레이션 실패 (계속 진행)"
 else
     log_info "마이그레이션을 건너뜁니다."
