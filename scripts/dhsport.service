@@ -1,0 +1,42 @@
+[Unit]
+Description=DhSport ASP.NET Core Web API
+Documentation=https://github.com/your-org/dhsport_backend
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=dhsport
+Group=dhsport
+
+# 작업 디렉토리
+WorkingDirectory=/opt/dhsport/app
+
+# 실행 명령
+ExecStart=/usr/bin/dotnet /opt/dhsport/app/DhSport.API.dll
+
+# 재시작 정책
+Restart=always
+RestartSec=10
+KillSignal=SIGINT
+
+# 환경 변수
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+Environment=ASPNETCORE_URLS=http://localhost:5000
+
+# 리소스 제한 (선택사항)
+#LimitNOFILE=65536
+#MemoryLimit=2G
+
+# 로그 설정
+SyslogIdentifier=dhsport
+StandardOutput=journal
+StandardError=journal
+
+# 보안 설정
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,48 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=172.30.1.51;Port=5432;Database=dhsports_prd;Username=dhsport;Password=${DB_PASSWORD}",
+    "Redis": "172.30.1.51:6379"
+  },
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "Microsoft.AspNetCore": "Warning",
+        "Microsoft.EntityFrameworkCore": "Warning",
+        "System": "Warning"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "outputTemplate": "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "/opt/dhsport/logs/dhsport-.log",
+          "rollingInterval": "Day",
+          "retainedFileCountLimit": 30,
+          "outputTemplate": "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}"
+        }
+      }
+    ],
+    "Enrich": ["FromLogContext", "WithMachineName", "WithThreadId"]
+  },
+  "Jwt": {
+    "Secret": "${JWT_SECRET}",
+    "Issuer": "DhSport.API",
+    "Audience": "DhSport.Client",
+    "ExpirationHours": 24
+  },
+  "AllowedHosts": "api.dhsport.com",
+  "Cors": {
+    "AllowedOrigins": [
+      "https://www.dhsport.com",
+      "https://dhsport.com"
+    ]
+  }
+}

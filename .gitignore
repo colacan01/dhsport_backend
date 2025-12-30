@@ -36,5 +36,16 @@ packages/
 .idea/
 *.sln.iml
 
-
+# 환경별 설정 파일 (민감한 정보 포함)
 appsettings.Development.json
+appsettings.Production.json
+
+# 업로드 파일
+uploads/
+
+# 백업 파일
+backups/
+
+# 배포 관련
+publish/
+deploy/
