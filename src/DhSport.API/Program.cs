@@ -62,6 +62,24 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Redis 분산 세션 설정
+var redisConnection = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrEmpty(redisConnection))
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConnection;
+    });
+
+    builder.Services.AddSession(options =>
+    {
+        options.IdleTimeout = TimeSpan.FromHours(2);
+        options.Cookie.HttpOnly = true;
+        options.Cookie.IsEssential = true;
+        options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+    });
+}
+
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -112,6 +130,9 @@ if (enableSwagger)
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
+
+// Session 미들웨어 (Authentication 이전에 추가)
+app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();

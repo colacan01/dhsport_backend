@@ -43,6 +43,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<MediaLib> MediaLibs => Set<MediaLib>();
     public DbSet<SiteConfig> SiteConfigs => Set<SiteConfig>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<SiteLog> SiteLogs => Set<SiteLog>();
 
     // Business
     public DbSet<Reservation> Reservations => Set<Reservation>();

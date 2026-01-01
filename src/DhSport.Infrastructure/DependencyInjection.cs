@@ -4,6 +4,7 @@ using DhSport.Application.Interfaces;
 using DhSport.Domain.Interfaces.Repositories;
 using DhSport.Domain.Interfaces.Services;
 using DhSport.Infrastructure.Data;
+using DhSport.Infrastructure.Options;
 using DhSport.Infrastructure.Repositories;
 using DhSport.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -54,9 +55,17 @@ public static class DependencyInjection
             services.AddScoped<ICacheService, RedisCacheService>();
         }
 
+        // Redis Options
+        services.Configure<RedisOptions>(configuration.GetSection("Redis"));
+
         // Repositories
         services.AddScoped(typeof(DhSport.Application.Interfaces.IRepository<>), typeof(Repository<>));
         services.AddScoped<DhSport.Application.Interfaces.IUnitOfWork, UnitOfWork>();
+        services.AddScoped<ISiteLogRepository, SiteLogRepository>();
+
+        // SiteLog Publisher & Subscriber
+        services.AddSingleton<ISiteLogPublisher, RedisSiteLogPublisher>();
+        services.AddHostedService<RedisSiteLogSubscriber>();
 
         // JWT Service
         services.AddScoped<IJwtService, JwtService>();
