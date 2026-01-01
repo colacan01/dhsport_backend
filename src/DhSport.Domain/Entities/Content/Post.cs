@@ -1,5 +1,6 @@
 using DhSport.Domain.Entities.Common;
 using DhSport.Domain.Entities.Features;
+using DhSport.Domain.Entities.UserManagement;
 
 namespace DhSport.Domain.Entities.Content;
 
@@ -32,6 +33,7 @@ public class Post : BaseEntity, IAuditableEntity, ISoftDeletable
     // Navigation properties
     public virtual Board Board { get; set; } = null!;
     public virtual PostType PostType { get; set; } = null!;
+    public virtual User Author { get; set; } = null!;
     public virtual ICollection<PostFile> Files { get; set; } = new List<PostFile>();
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
     public virtual ICollection<PostRevision> Revisions { get; set; } = new List<PostRevision>();

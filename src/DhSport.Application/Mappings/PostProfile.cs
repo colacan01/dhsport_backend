@@ -27,5 +27,8 @@ public class PostProfile : Profile
             .ForMember(dest => dest.Replies, opt => opt.Ignore());
 
         CreateMap<PostType, PostTypeDto>();
+
+        CreateMap<PostRevision, PostRevisionDto>()
+            .ForMember(dest => dest.RevisionUserNm, opt => opt.Ignore());
     }
 }

@@ -4,8 +4,12 @@ using DhSport.Application.DTOs.Post;
 using DhSport.Application.Features.Posts.Commands.CreatePost;
 using DhSport.Application.Features.Posts.Commands.DeletePost;
 using DhSport.Application.Features.Posts.Commands.LikePost;
+using DhSport.Application.Features.Posts.Commands.RestorePostRevision;
 using DhSport.Application.Features.Posts.Commands.UpdatePost;
 using DhSport.Application.Features.Posts.Queries.GetPost;
+using DhSport.Application.Features.Posts.Queries.GetPostRevisionById;
+using DhSport.Application.Features.Posts.Queries.GetPostRevisionDiff;
+using DhSport.Application.Features.Posts.Queries.GetPostRevisions;
 using DhSport.Application.Features.Posts.Queries.GetPosts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -157,6 +161,110 @@ public class PostsController : ControllerBase
         catch (KeyNotFoundException ex)
         {
             return NotFound(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// 게시물 리비전 목록 조회
+    /// </summary>
+    [HttpGet("{id}/revisions")]
+    [Authorize]
+    [ProducesResponseType(typeof(List<PostRevisionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetPostRevisions(Guid id, CancellationToken cancellationToken)
+    {
+        var userId = GetUserIdFromToken();
+        var isAdmin = User.IsInRole("Admin");
+        
+        var revisions = await _mediator.Send(
+            new GetPostRevisionsQuery(id, userId, isAdmin), 
+            cancellationToken);
+
+        return Ok(revisions);
+    }
+
+    /// <summary>
+    /// 특정 리비전 조회
+    /// </summary>
+    [HttpGet("{id}/revisions/{revisionId}")]
+    [Authorize]
+    [ProducesResponseType(typeof(PostRevisionDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetPostRevisionById(Guid id, Guid revisionId, CancellationToken cancellationToken)
+    {
+        var userId = GetUserIdFromToken();
+        var isAdmin = User.IsInRole("Admin");
+        
+        var revision = await _mediator.Send(
+            new GetPostRevisionByIdQuery(revisionId, userId, isAdmin), 
+            cancellationToken);
+
+        if (revision == null)
+            return NotFound(new { message = "Revision not found" });
+
+        return Ok(revision);
+    }
+
+    /// <summary>
+    /// 리비전 간 차이점 조회
+    /// </summary>
+    [HttpGet("{id}/revisions/{fromRevisionId}/diff/{toRevisionId}")]
+    [Authorize]
+    [ProducesResponseType(typeof(PostRevisionDiffDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetPostRevisionDiff(
+        Guid id, 
+        Guid fromRevisionId, 
+        Guid toRevisionId, 
+        CancellationToken cancellationToken)
+    {
+        var userId = GetUserIdFromToken();
+        var isAdmin = User.IsInRole("Admin");
+        
+        var diff = await _mediator.Send(
+            new GetPostRevisionDiffQuery(fromRevisionId, toRevisionId, userId, isAdmin), 
+            cancellationToken);
+
+        if (diff == null)
+            return NotFound(new { message = "Revision not found or revisions are from different posts" });
+
+        return Ok(diff);
+    }
+
+    /// <summary>
+    /// 리비전 복원
+    /// </summary>
+    [HttpPost("{id}/revisions/{revisionId}/restore")]
+    [Authorize]
+    [ProducesResponseType(typeof(PostDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> RestorePostRevision(Guid id, Guid revisionId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var userId = GetUserIdFromToken();
+            var isAdmin = User.IsInRole("Admin");
+            
+            var post = await _mediator.Send(
+                new RestorePostRevisionCommand(id, revisionId, userId, isAdmin), 
+                cancellationToken);
+
+            return Ok(post);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
         }
     }
 

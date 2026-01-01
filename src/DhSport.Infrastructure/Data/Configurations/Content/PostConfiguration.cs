@@ -103,6 +103,11 @@ public class PostConfiguration : IEntityTypeConfiguration<Post>
         builder.HasIndex(p => p.PublishDttm);
 
         // Relationships
+        builder.HasOne(p => p.Author)
+            .WithMany()
+            .HasForeignKey(p => p.AuthorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(p => p.Files)
             .WithOne(f => f.Post)
             .HasForeignKey(f => f.PostId)
